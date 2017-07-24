@@ -270,3 +270,117 @@ class DomainRiskList(csv.CSVFT):
             os.remove(side_config_path)
         except:
             pass
+
+
+class VulnerabiltyRiskList(csv.CSVFT):
+
+    def configure(self):
+        super(VulnerabiltyRiskList, self).configure()
+
+        self.source_name = 'recordedfuture.VulnerabiltyRiskList'
+        self.confidence = self.config.get('confidence', 80)
+
+        self.token = None
+        self.side_config_path = self.config.get('side_config', None)
+        if self.side_config_path is None:
+            self.side_config_path = os.path.join(
+                os.environ['MM_CONFIG_DIR'],
+                '%s_side_config.yml' % self.name
+            )
+
+        self._load_side_config()
+
+    def _load_side_config(self):
+        try:
+            with open(self.side_config_path, 'r') as f:
+                sconfig = yaml.safe_load(f)
+
+        except Exception as e:
+            LOG.error('%s - Error loading side config: %s', self.name, str(e))
+            return
+
+        self.token = sconfig.get('token', None)
+        if self.token is not None:
+            LOG.info('%s - token set', self.name)
+
+    def _process_item(self, row):
+        row.pop(None, None)  # I love this
+
+        result = {}
+
+        indicator = row.get('Name', '')
+        if indicator == '':
+            return []
+
+        risk = row.get('Risk', '')
+        if risk != '':
+            try:
+                result['recordedfuture_risk'] = int(risk)
+                result['confidence'] = (int(risk) * self.confidence) / 100
+            except:
+                LOG.debug("%s - invalid risk string: %s",
+                          self.name, risk)
+
+        riskstring = row.get('RiskString', '')
+        if riskstring != '':
+            result['recordedfuture_riskstring'] = riskstring
+
+        edetails = row.get('EvidenceDetails', '')
+        if edetails != '':
+            try:
+                edetails = ujson.loads(edetails)
+            except:
+                LOG.debug("%s - invalid JSON string in EvidenceDetails: %s",
+                          self.name, edetails)
+            else:
+                edetails = edetails.get('EvidenceDetails', [])
+                result['recordedfuture_evidencedetails'] = \
+                    [ed['Rule'] for ed in edetails]
+
+        result['recordedfuture_entityurl'] = \
+            'https://www.recordedfuture.com/live/sc/entity/ip:' + indicator
+
+        return [[indicator, result]]
+
+    def _build_iterator(self, now):
+        if self.token is None:
+            raise RuntimeError(
+                '%s - token not set, poll not performed' % self.name
+            )
+
+        return super(VulnerabiltyRiskList, self)._build_iterator(now)
+
+    def _build_request(self, now):
+        params = {'output_format': 'csv/splunk'}
+        headers = {'X-RFToken': self.token}
+        r = requests.Request(
+            'GET',
+            'https://api.recordedfuture.com/v2/VulnerabiltyRiskList/risklist',
+            headers=headers, params=params,
+
+        )
+
+        return r.prepare()
+
+    def hup(self, source=None):
+        LOG.info('%s - hup received, reload side config', self.name)
+        self._load_side_config()
+        super(VulnerabiltyRiskList, self).hup(source)
+
+    @staticmethod
+    def gc(name, config=None):
+        csv.CSVFT.gc(name, config=config)
+
+        side_config_path = None
+        if config is not None:
+            side_config_path = config.get('side_config', None)
+        if side_config_path is None:
+            side_config_path = os.path.join(
+                os.environ['MM_CONFIG_DIR'],
+                '{}_side_config.yml'.format(name)
+            )
+
+        try:
+            os.remove(side_config_path)
+        except:
+            pass

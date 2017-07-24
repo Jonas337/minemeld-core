@@ -83,6 +83,9 @@
 	"minemeld.ft.recordedfuture.DomainRiskList": {
         "class": "minemeld.ft.recordedfuture:DomainRiskList"
     },
+	"minemeld.ft.recordedfuture.VulnerabilityRiskList": {
+        "class": "minemeld.ft.recordedfuture:VulnerabilityRiskList"
+    },
     "minemeld.ft.redis.RedisSet": {
         "class": "minemeld.ft.redis:RedisSet"
     },
