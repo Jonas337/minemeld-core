@@ -148,7 +148,6 @@ class CSVFT(basepoller.BasePollerFT):
             **self.dialect
         )
 
-        return csvreader
 
 class CSVFTLocal(basepoller.BasePollerFT):
 
