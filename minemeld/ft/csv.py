@@ -188,12 +188,7 @@ class CSVFTLocal(basepoller.BasePollerFT):
     """
     def configure(self):
         super(CSVFT, self).configure()
-<<<<<<< HEAD
-
         self.path = self.config.get('path', None)
-=======
-		self.path = self.config.get('path', None)
->>>>>>> dbac50eb4e5a5d5a98a634d69a16c3332caa68fb
         self.ignore_regex = self.config.get('ignore_regex', None)
         if self.ignore_regex is not None:
             self.ignore_regex = re.compile(self.ignore_regex)
@@ -221,9 +216,5 @@ class CSVFTLocal(basepoller.BasePollerFT):
             **self.dialect
         )
 
-<<<<<<< HEAD
         return csvreader
-=======
-        return csvreader
-  
->>>>>>> dbac50eb4e5a5d5a98a634d69a16c3332caa68fb
+
