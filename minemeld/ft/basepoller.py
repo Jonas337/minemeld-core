@@ -458,6 +458,7 @@ class BasePollerFT(base.BaseFT):
                         value=v
                     )
                     v['_withdrawn'] = now
+                    v['_last_run'] = 0
                     self.table.put(i, v)
 
                     self.statistics['flushed'] += 1
@@ -907,7 +908,7 @@ class BasePollerFT(base.BaseFT):
                 signal=signal,
                 **kwargs
             )
-            
+
         self._actor_queue.put(
             (utc_millisec(), 'flush')
         )
